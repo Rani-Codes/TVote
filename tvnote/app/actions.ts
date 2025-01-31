@@ -2,6 +2,16 @@
 
 import { redis } from "@/app/utils/redis";
 
+// This function checks if the user has already voted for a specific show in the selected category
+export async function hasVotedForCategory(userId: string, show: string, category: string) {
+  // The Redis key for storing the user's vote for the show in the selected category
+  const userVoteKey = `user:${userId}:votes:${category}`;
+
+  // Check if the user has voted for this show in the selected category
+  const hasVoted = await redis.sismember(userVoteKey, show);
+  return hasVoted; // Returns true if the user has already voted
+}
+
 export async function getLeaderboard() {
   const desertIslandRaw: string[] = await redis.zrange("leaderboard:desert_island", 0, 9, { rev: true, withScores: true });
   const eatingShowsRaw: string[] = await redis.zrange("leaderboard:watch_while_eating", 0, 9, { rev: true, withScores: true });
@@ -20,10 +30,26 @@ export async function getLeaderboard() {
   return { desertIsland, eatingShows };
 }
 
-export async function voteForShow(show: string, category: "desert_island" | "watch_while_eating") {
+export async function voteForShow(show: string, category: "desert_island" | "watch_while_eating", clerkSession: string) {
   if (!show.trim()) return;
+
+  // Get user ID from Clerk session
+  const userId = clerkSession;
+
+  // Check if the user has already voted for this show in the selected category
+  const userVoteKey = `user:${userId}:votes:${category}`;
+
+  // Check if the user has voted for this show
+  const hasVoted = await redis.sismember(userVoteKey, show);
+
+  if (hasVoted) {
+    // If the user has already voted, return early
+    return;
+  }
 
   // Increment the score for the show in the selected category
   await redis.zincrby(`leaderboard:${category}`, 1, show);
-}
 
+  // Mark that the user has voted for this show by adding it to the user's vote set
+  await redis.sadd(userVoteKey, show);
+}
