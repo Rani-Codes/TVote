@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useUser } from "@clerk/nextjs";
 import { getLeaderboard } from "@/app/actions";
+import Leaderboard from "./Leaderboard";
 
 export default function Home() {
   const { user } = useUser();
@@ -32,34 +33,33 @@ export default function Home() {
   };
 
   return (
-    <div>
+    <div className="">
       {user ? (
         <>
-          <input 
-            value={show} 
-            onChange={(e) => setShow(e.target.value)} 
-            placeholder="Enter a show" 
-          />
-          <button onClick={() => vote("desert_island")}>Vote as Desert Island Show</button>
-          <button onClick={() => vote("watch_while_eating")}>Vote as Eating Show</button>
+        <div className="flex flex-col justify-center items-center text-2xl font-semibold">
+            <input 
+                value={show} 
+                onChange={(e) => setShow(e.target.value)} 
+                placeholder="Enter a show" 
+                className=" text-center font-normal"
+            />
+            <div className="flex justify-center gap-20 w-full">
+                <button onClick={() => vote("desert_island")}>Vote as Desert Island Show</button>
+                <button onClick={() => vote("watch_while_eating")}>Vote as Eating Show</button>
+            </div>
+        </div>
+
         </>
       ) : (
-        <p>Please sign in to vote</p>
+        <p className="text-3xl">Please sign in to vote</p>
       )}
 
-      <h2>Desert Island Shows</h2>
-      <ul>
-        {desertIsland.map(([name, votes]) => (
-          <li key={name}>{name} - {votes} votes</li>
-        ))}
-      </ul>
-
-      <h2>Watch While Eating Shows</h2>
-      <ul>
-        {eatingShows.map(([name, votes]) => (
-          <li key={name}>{name} - {votes} votes</li>
-        ))}
-      </ul>
+        <div className="flex w-full h-full justify-center">
+        <Leaderboard
+        desertIsland={desertIsland}
+        eatingShows={eatingShows}
+        />
+        </div>
     </div>
   );
 }
